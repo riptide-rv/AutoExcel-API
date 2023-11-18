@@ -67,8 +67,20 @@ async def openai(req: OpenAiReq):
                     given context:{req.context},
                     given columns:{req.columns}, 
                     given unstructured data: '{req.data}'.\ngive json output, make sure to keep the quotes properly.
-                    Also column order should be same as order of 'given columns', take care to make sure that similar columns and datas are not mixed up
-
+                    Also column order should be same as order of 'given columns', take care to make sure that similar columns and datas are not mixed up.
+                    convert numbers like 2k to 2000 and 2lac or 2lakh to 200000, dates should be converted to day-month-year, use context to check whether conversion is needed example in case of milage column and value 12mi , mi means mileage and not million so return just 12.
+\n\nAdditionally, consider the following cases for better data parsing:\n
+- Identify and handle cases where abbreviations are used in unstructured data. For example, 'mi' could represent mileage, and 'mn' could represent million.
+- Recognize variations of numeric representations, such as '12k' for 12000 and '1.5m' for 1500000.
+- Handle cases where multiple units are used for the same quantity, such as '2kgs' for 2 kilograms or '3lbs' for 3 pounds.
+- Account for variations in date formats and convert them to a consistent format (day-month-year).
+- Identify and handle special cases mentioned in the context, such as 'lakh' or 'lac' for the Indian numbering system (1 lakh = 100,000).
+- Ensure that the parser is robust to handle missing or incomplete data, assigning 'NA' where appropriate.
+- Consider implementing checks for common abbreviations and acronyms relevant to the given context and columns.
+- remove unit names and return only hard numbers for columns that take number values
+- context based for mileage column 25mi mileage means return just 25
+    
+- always return json string dont return json code
                     """
          },
        
