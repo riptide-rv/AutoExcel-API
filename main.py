@@ -55,18 +55,18 @@ async def openai(req: OpenAiReq):
     messages=[
         {
         "role": "system", 
-         "content": """You are a text parser which takes unstructred data and return
-                    structured data in the form of json object,Given a context ,column names
+         "content": """You are a text parser function which takes in string and returns j  which takes unstructred data and return
+                    structured data in the form of json object(dont return json object) output should be string object,Given a context ,column names
                     and unstructured data for a  csv file,  return json object for the data as ,
                     \n{\n "column1": "relevant data",\n"column2": "relevant data"   ,\n......\n}\nif data is not present use NA,
-                    return only the json object.\n\n Example for  a car dealership the columns are brand ,
+                    return only the json object as a json object not string.\n\n Example for  a car dealership the columns are brand ,
                     make, manufacturing year,  ownership number, price, km run.
-                    \n\nunstructured data: '2017 Sigma 4 auto 4by4 delhi 1st 1.29lac km done, 21.5 lac '.\n```\n
-                    structured output: {\nmanufacturing year: 2017,\nkm_run: 129000,\nprice: 2150000,\nownership_no:NA,\nmake: NA,\nbrand:NA\n}\n```\n\n
+                    \n\nunstructured data: '2017 Sigma 4 auto 4by4 delhi 1st 1.29lac km done, 21.5 lac '.\n\n
+                    structured output (the output you should give no other content is allowed): ```{\n"manufacturing year": 2017,\n"km_run": 129000,\n"price": 2150000,\n"ownership_no":"NA",\n"make": NA,\n"brand":NA\n}```\n\n\n
                     """f"""
                     given context:{req.context},
                     given columns:{req.columns}, 
-                    given unstructured data: '{req.data}'.\ngive json output, make sure to keep the quotes properly.
+                    given unstructured data: '{req.data}'.\ngive json object output, make sure to keep the quotes properly.
                     Also column order should be same as order of 'given columns', take care to make sure that similar columns and datas are not mixed up.
                     convert numbers like 2k to 2000 and 2lac or 2lakh to 200000, dates should be converted to day-month-year, use context to check whether conversion is needed example in case of milage column and value 12mi , mi means mileage and not million so return just 12.
 \n\nAdditionally, consider the following cases for better data parsing:\n
@@ -79,8 +79,7 @@ async def openai(req: OpenAiReq):
 - Consider implementing checks for common abbreviations and acronyms relevant to the given context and columns.
 - remove unit names and return only hard numbers for columns that take number values
 - context based for mileage column 25mi mileage means return just 25
-    
-- always return json string dont return json code
+- always return json object 
                     """
          },
        
@@ -89,7 +88,11 @@ async def openai(req: OpenAiReq):
     open_res= completion.choices[0].message.content
     print(open_res)
 
-    return parse_and_clean(completion.choices[0].message.content)
+    st = extract_json_string(open_res)
+    print(st)
+    
+
+    return parse_and_clean(st)
 
 @app.post("/addrow/{sheet_name}")
 async def addrow(sheet_name:str, value: dict):
@@ -102,10 +105,19 @@ async def addrow(sheet_name:str, value: dict):
     return value
 
 
-
+def extract_json_string(s):
+    start_index = s.find('{')
+    end_index = s.rfind('}')
+    if start_index != -1 and end_index != -1:
+        return s[start_index:end_index+1]
+    else:
+        return None
 
 def parse_and_clean(json_string):
     data_dict = json.loads(json_string)
     cleaned_dict = {key.replace('\n', ''): value.replace('\n', '') if isinstance(value, str) else value for key, value in data_dict.items()}
     return cleaned_dict
 
+
+def json_to_dict(json_str):
+    return json.loads(json_str)
