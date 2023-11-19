@@ -49,7 +49,7 @@ async def openai(req: OpenAiReq):
 #     "data":"audi a6 2019 23000km 2lac"
 # }
 
-    print("firls")
+    print("check")
     completion = client.chat.completions.create(
     model="gpt-3.5-turbo-1106",
     messages=[
@@ -85,9 +85,11 @@ async def openai(req: OpenAiReq):
        
         ]
     )
+    # debug lines to check generated output
     open_res= completion.choices[0].message.content
     print(open_res)
 
+    # parsing output to get only json
     st = extract_json_string(open_res)
     print(st)
     
@@ -108,11 +110,12 @@ async def addrow(sheet_name:str, value: dict):
 def extract_json_string(s):
     start_index = s.find('{')
     end_index = s.rfind('}')
-    if start_index != -1 and end_index != -1:
+    if start_index != -1 and end_index != -1    :
         return s[start_index:end_index+1]
     else:
         return None
 
+# removes unnessary newlines and spaces
 def parse_and_clean(json_string):
     data_dict = json.loads(json_string)
     cleaned_dict = {key.replace('\n', ''): value.replace('\n', '') if isinstance(value, str) else value for key, value in data_dict.items()}
